@@ -1,0 +1,8 @@
+name = "PolynomialInterpolations"
+uuid = "bb3dacc1-53cd-49f0-9b38-4f50a06f6905"
+authors = ["leogabac <leogabac@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Kronecker = "2c470bb0-bcc8-11e8-3dad-c9649493f05e"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
