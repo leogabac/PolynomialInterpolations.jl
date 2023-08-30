@@ -34,7 +34,7 @@ struct TwoVarPolynomial{T}
 end
 
 struct NVarPolynomial{T,N}
-    pows::Tuple{Vararg{Int64,N}}
+    pows::Vector{Tuple{Vararg{Int64,N}}}
     coefficients::Vector{T}
 end
 
