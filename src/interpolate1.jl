@@ -35,10 +35,15 @@ function diffpoly(p::OneVarPolynomial)
     # this will help me to form a new set of powers and coefficients that survive the process of differentiation
     # then only the set of powers and respective coefficients, survive in correspondance,
     # this will make easier "custom polynomials" that could not have all the terms in order.
+        # Nota de David: 
+            # siento que lo anterior es ineficietne; sabes que p.pows es [0, 1, ..., n] desde el inicio. 
+            # Podríamos escribir 
+                # nonzero = (p.pows .* p.coefficients)[2:end]
+            # Así también 
+                # newpows = (p.pows .- 1)[2:end]
     @assert length(nonzero) == length(newpows)
     return OneVarPolynomial{eltype(nonzero)}(newpows, nonzero)
 end
-
 
 function intpoly(p::OneVarPolynomial; lims::Vector)
     newpows = [current+1 for current in p.pows]

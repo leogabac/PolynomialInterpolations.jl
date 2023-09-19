@@ -43,8 +43,34 @@ function interpolaten(data::Matrix)
     return NVarPolynomial{eltype(Ainv),length(ranges)}( powers , Ainv*data[:,end] )
 end
 
+# según yo tu rutina para TwoVarPolynomial funciona directo para NVarPolynomial; solo generalicé lo de aux y el return
+# hice pruebas comparando con resultados analíticos y todo se ve en orden
+function diffpoly(p::NVarPolynomial; variable::Int64)
+    nvars = length(p.pows[1]);
+    # loop through the list of powers, and retrieve a set of the powers in the correct "variable" place
+    scaling = [ p.pows[k][variable] for k in 1:length(p.pows) ] # obtain the list of the scaling factors
+
+    # form a (0,0,1,...,0) auxiliar tuple with a one in the correct place
+    aux = Tuple(vcat(zeros(Int64,variable-1), 1, zeros(Int64,nvars-variable)))
+    # subtract one from the powers whose value at the "variable" place is not zero and retrieve all of them
+    newvarpows = [ current.-aux for current in p.pows if current[variable] != 0] # subtract one ...
+
+    # the scaling vector has all the OG powers in the correct place, hence we look for all the indices
+    # corresponding to non zero powers
+    nonzeropows = findall( x-> x .!= 0, scaling) # find all indices of nonzero powers 
+
+    # we retrieve update all coefficients
+    aux_coef = scaling .* p.coefficients # obtain all new coefficients
+
+    # and retrieve those that come from the correct, non zero "variable" place power.
+    nonzero = aux_coef[nonzeropows] # retrieve respective coeffients
+
+    @assert length(nonzero) == length(newvarpows)
+    return NVarPolynomial{eltype(nonzero), nvars}(newvarpows, nonzero)
+end
+
+
 function Base.evalpoly(p::NVarPolynomial, x::Real...)
     pure = [ *( (x.^currentpow)...) for currentpow in p.pows  ]
     return sum( p.coefficients .* pure   )
 end
-

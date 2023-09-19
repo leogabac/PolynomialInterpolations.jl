@@ -11,7 +11,7 @@ function interpolate2(data::Matrix)
     orders = (length(x)-1, length(y)-1 );
     ranges = ( 0:m for m in reverse(orders) );
     powers = vec( reverse.( collect( Iterators.product(ranges...) ) ) )
-    coef = Kronecker.kron( inv( vandermonde(x) ), LinearAlgebra.inv( vandermonde(y) ) ) * data[:,3] ;
+    coef = Kronecker.kron( LinearAlgebra.inv( vandermonde(x) ), LinearAlgebra.inv( vandermonde(y) ) ) * data[:,3] ;
     return TwoVarPolynomial{eltype(coef)}(powers, coef)
 end
 
@@ -54,7 +54,7 @@ function diffpoly(p::TwoVarPolynomial; variable::Int64)
 
     # form a (0,0,1,...,0) auxiliar tuple with a one in the correct place
     aux = Tuple(vcat(zeros(Int64,variable-1), 1, zeros(Int64,2-variable)))
-    # subtract one from the powers whose value at the "variable" place is not zerom and retrieve all of them
+    # subtract one from the powers whose value at the "variable" place is not zero and retrieve all of them
     newvarpows = [ current.-aux for current in p.pows if current[variable] != 0] # subtract one ...
 
     # the scaling vector has all the OG powers in the correct place, hence we look for all the indices
