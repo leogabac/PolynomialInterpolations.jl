@@ -12,7 +12,6 @@ function dataloader(data::Matrix)
         uniques = [unique(data[:,k]) for k in 1:size(data,2)-1] # retrieve unique vectors in data
         NVarPolydata{eltype(data), size(data,2)-1 }(uniques,data[:,end])
     end
-
 end
 
 function dataloader(values::Vector,x::Vector...)

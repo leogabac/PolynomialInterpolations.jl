@@ -3,19 +3,56 @@
 
 ----------------------------------------- TO DO LIST ----------------------------------------
 
-- Implementar gradientes:                                                               DONE
-    grad(model::OneVarPolynomial, x::Real)::Real
-    grad(model::TwoVarPolynomial, x::Vector)::Vector
-    grad(model::NVarPolynomial, x::Vector)::Vector
+- Gradientes                                                                             DONE
+    Implementar funciones para encontrar el gradiente de forma analítica
+        grad(model::OneVarPolynomial, x::Real)::Vector
+        grad(model::TwoVarPolynomial, x::Vector)::Vector
+        grad(model::NVarPolynomial, x::Vector)::Vector
+    y una función para evaluar el gradiente en algún punto 
+        evalgrad(G, x)
 
-- Implementar hessiana:                                                                 DONE
-    hess(model::OneVarPolynomial, x::Real)::Real
-    hess(model::TwoVarPolynomial, x::Vector)::Matrix
-    hess(model::NVarPolynomial, x::Vector)::Matrix
+- Hessiana                                                                              DONE
+    Implementar funciones para encontrar el hessiana de forma analítica
+        hess(model::OneVarPolynomial, x::Real)::Matrix
+        hess(model::TwoVarPolynomial, x::Vector)::Matrix
+        hess(model::NVarPolynomial, x::Vector)::Matrix
+    y una función para evaluar el gradiente en algún punto 
+        evalhess(H, x)
 
-- DataLoaders
+- DataLoaders                                                                           DONE
+    Es necesario hacer una función
+        DataLoader(data::Matrix)::OneVarPolydata
+        DataLoader(data::Matrix)::TwoVarPolydata
+        DataLoader(data::Matrix)::NVarPolydata
+    para no estar usando sortslices(). Además, con ello hay que modificar las
+    funciones de interpolate1, interpolate2, e interpolaten y usar multiple dispatch:
+        interpolate(data::OneVarPolydata)::OneVarPolynomial
+        interpolate(data::TwoVarPolydata)::TwoVarPolynomial
+        interpolate(data::NVarPolydata)::NVarPolynomial
+    al hacer esto dedicí limpiar el código y documentarlo
 
+- Laplacian                                                                             DONE
+    laplacian(model::OneVarPolynomial, x::Real)::OneVarPolynomial
+    laplacian(model::TwoVarPolynomial, x::Vector)::TwoVarPolynomial
+    laplacian(model::NVarPolynomial, x::Vector)::NVarPolynomial
 
+- Struct para guardar todas las derivadas vectoriales                                   PENDING
+    el chiste es tener a la mano todas las derivadas a fin de poderlas usar sin recalcular,
+    algo así:
+        struct NVarField{T,N}
+            poly::NVarPolynomial{T,N}
+            grad::Vector{NVarPolynomial{T,N}}
+            hess::Matrix{NVarPolynomial{T,N}}
+            lap::NVarPolynomial{T,N}
+        end 
+    y una función que tome un polinomio y lance esa estructura
+
+=============================================================================================
+========================================================================================== =#
+
+#= ==========================================================================================
+=============================================================================================
+preamble & functions
 =============================================================================================
 ========================================================================================== =#
 
@@ -26,294 +63,137 @@
     Pkg.activate("PolyInterp_environment")
 
 using Base: Tuple
-import Base: Iterators.take, Iterators.rest
+import Base: Iterators.take, Iterators.rest, Base.+, Base.-
 using LinearAlgebra: eltype
 using Plots: length
 using Kronecker, LinearAlgebra, FiscomTools;
 
 include("structs.jl")
 include("dataloaders.jl")
-include("interpolate1.jl")
-include("interpolate2.jl")
-include("interpolaten.jl")
-include("gradient.jl")
-include("hessian.jl")
-
-
-#! DATALOADERS
-# ===================================================================
-#  TEST
-# ===================================================================
-
+include("interpolate.jl")
+include("algebra.jl")
 include("datatests.jl")
-
-dataloader(test1[:,2], test1[:,1])
-
-dataloader(test2[:,3], 
-test2[:,1] ,
-test2[:,2] )
-
-dataloader(testn[:,5], 
-testn[:,1] ,
-testn[:,2] ,
-testn[:,3] ,
-testn[:,4])
-
-
-d1 = dataloader(test1)
-d2 = dataloader(test2)
-dn = dataloader(testn)
-
-
-# ===================================================================
-#  EVALUATION TESTS
-# ===================================================================
-
-function data2()
-    x = 1.:1:10.; 
-    y = round.(sin.(x), digits=2); 
-    return  [x y]
-end
-test2 = data2();
-
-x = test2[:,1]
-y = test2[:,2]
-
-interpolate1(test2)
-interpolate1(x,y)
-
-p1 = interpolate1(x,y)
-approx_og = [ evalpoly(p1, xs) for xs in x ]
-sum(approx_og - y)/length(y)
-
-# ===================================================================
-#  DIFFERENTIATION TESTS
-# ===================================================================
-
-p1 = OneVarPolynomial([0,1,2], [1,3,2] ) # 1 + 3x + 2x²
-# 3 + 4x
-# 4
-p = diffpoly(p1)
-p = diffpoly(p)
-p = diffpoly2(p1)
-evalpoly(p, 1)
-
-grad(p1, 1)
-hess(p1, 1)
-
-# ===================================================================
-#  INTEGRATION TESTS
-# ===================================================================
-
-p1 = OneVarPolynomial([0,1,2], [1,3,2] )
-
-p = intpoly(p1, lims = [-10,1] )
-
-
-
-#! iNTERPOLATE 2
-
-function data3()
-    x = collect(Float64, -0.5:0.5:1.5);
-    y = collect(Float64, -0.5:0.5:1.5);
-    m = length(x); n = length(y);
-    c = 1;
-    data = Array{Float64}(undef, m * n, 3);
-    dx  = 2.5;
-    dy = -0.4;
-    for i in 1:m
-        for j in 1:n
-            data[c,:] = [ x[i], y[j], sin(x[i]) + 2*cos(y[j]) + sin(5*x[i]*y[j])  ]';
-            c += 1;
-        end 
-    end
-    return data
-end
-
-
-
-# ===================================================================
-#  TEST
-# ===================================================================
-
-data = data3()
-# @benchmark sortslices(data, dims = 1);
-data = sortslices(data, dims = 1)
-p1 = interpolate2(data)
-
-approxog = [ evalpoly(p1,p...) for p in zip(data[:,1],data[:,2]) ]
-sum( abs.(approxog - data[:,3]) ) / length(data[:,3])
-
-evalpoly(p1, [1,2]...)
-[1,1] isa Vector
-@time interpolate2(data); 
-
-
-# ===================================================================
-#  DIFFERENTIATION TEST
-# ===================================================================
-
-p1 = TwoVarPolynomial{Float64}([(0,0), (0,1), (1,0), (1,1)], [1,2,3,4] ) # 1 + 2y + 3x + 4xy
-# p = diffpoly(p1, variable = 2)
-# p = diffpoly(p, variable = 2)
-# p = diffpoly2(p1, variable = 2)
-# @code_warntype diffpoly(p1, variable = 2)
-
-grad(p1, [1,1])
-p1x = diffpoly(p1, variable = 1); evalpoly(p1x, [1,1]...)
-p1y = diffpoly(p1, variable = 2); evalpoly(p1y, [1,1]...)
-
-hess(p1, [1,1])
-
-p1xx = diffpoly2(p1, variable_1 = 1, variable_2 = 1); evalpoly(p1xx, [1,1]...)
-p1xy = diffpoly2(p1, variable_1 = 1, variable_2 = 2); evalpoly(p1xy, [1,1]...)
-p1yx = diffpoly2(p1, variable_1 = 2, variable_2 = 1); evalpoly(p1yx, [1,1]...)
-p1yy = diffpoly2(p1, variable_1 = 2, variable_2 = 2); evalpoly(p1yy, [1,1]...)
-
-p1cul = NVarPolynomial{Float64,2}([(0,0), (0,1), (1,0), (1,1)], [1,2,3,4] )
-grad(p1cul, [1,1])
-hess(p1cul, [1,1])
-
-
-
-# ===================================================================
-#  INTEGRATION TEST
-# ===================================================================
-
-p1 = TwoVarPolynomial{Float64}([(0,0), (0,1), (1,0), (1,1)], [1,2,3,4] )
-intpoly(p1, lims = [(0,0), (10,2)])
-
-@code_warntype intpoly(p1, lims = [(0,0), (10,2)])
-
-
-#! INTERPOLATE 3
-
-
-function datan()
-    x = collect(Float64, 1:4);
-    y = collect(Float64, 1:4);
-    z = collect(Float64, -1:3);
-    t = collect(Float64, 0:3);
-
-    m = length(x); n = length(y); p = length(z); q = length(t);
-    data = Array{Float64}(undef, m * n * p * q, 5);
-    dx  = 2.5;
-    dy = -0.4;
-    c = 1; 
-    for i in 1:m
-        for j in 1:n
-            for k in 1:p
-                for l in 1:q
-                    data[c,:] = [x[i], y[j], z[k], t[l], round(x[i]^2 + x[i], digits=2)]';
-                    # data[c,:] = [x[i], y[j], z[k], t[l], round(sin(x[i]) * cos(y[j]) * exp(z[k]) * 5 * (sin(t[l] * pi / 3) + 0.5), digits=2)]';
-                    c += 1;
-                end
-            end
-        end 
-    end
-    return data
-end
-
-function datan_diffx()
-    x = collect(Float64, 1:4);
-    y = collect(Float64, 1:4);
-    z = collect(Float64, -1:3);
-    t = collect(Float64, 0:3);
-
-    m = length(x); n = length(y); p = length(z); q = length(t);
-    data = Array{Float64}(undef, m * n * p * q, 5);
-    dx  = 2.5;
-    dy = -0.4;
-    c = 1; 
-    for i in 1:m
-        for j in 1:n
-            for k in 1:p
-                for l in 1:q
-                    data[c,:] = [x[i], y[j], z[k], t[l], round(2*x[i] + 1, digits=2)]';
-                    # data[c,:] = [x[i], y[j], z[k], t[l], round(cos(x[i]) * cos(y[j]) * exp(z[k]) * 5 * (sin(t[l] * pi / 3) + 0.5), digits=2)]';
-                    c += 1;
-                end
-            end
-        end 
-    end
-    return data
-end
-
-function datan_diff2x()
-    x = collect(Float64, 1:4);
-    y = collect(Float64, 1:4);
-    z = collect(Float64, -1:3);
-    t = collect(Float64, 0:3);
-
-    m = length(x); n = length(y); p = length(z); q = length(t);
-    data = Array{Float64}(undef, m * n * p * q, 5);
-    dx  = 2.5;
-    dy = -0.4;
-    c = 1; 
-    for i in 1:m
-        for j in 1:n
-            for k in 1:p
-                for l in 1:q
-                    data[c,:] = [x[i], y[j], z[k], t[l], round(2, digits=2)]';
-                    # data[c,:] = [x[i], y[j], z[k], t[l], round(cos(x[i]) * cos(y[j]) * exp(z[k]) * 5 * (sin(t[l] * pi / 3) + 0.5), digits=2)]';
-                    c += 1;
-                end
-            end
-        end 
-    end
-    return data
-end
-
-
-data = datan()
-data = sortslices(data, dims=1);
-
-p1 = interpolaten(data)
-
-grad(p1, [1,1,1,1])
-p1x = diffpoly(p1, variable = 1); evalpoly(p1x, [1,1,1,1]...)
-p1y = diffpoly(p1, variable = 2); evalpoly(p1y, [1,1,1,1]...)
-p1z = diffpoly(p1, variable = 3); evalpoly(p1z, [1,1,1,1]...)
-p1t = diffpoly(p1, variable = 4); evalpoly(p1t, [1,1,1,1]...)
-
-hess(p1, [1,1,1,1])
-p1xx = diffpoly2(p1, variable_1 = 1, variable_2 = 1); evalpoly(p1xx, [1,1,1,1]...)
-p1xy = diffpoly2(p1, variable_1 = 1, variable_2 = 2); evalpoly(p1xy, [1,1,1,1]...)
-p1xz = diffpoly2(p1, variable_1 = 1, variable_2 = 3); evalpoly(p1xz, [1,1,1,1]...)
-p1xt = diffpoly2(p1, variable_1 = 1, variable_2 = 4); evalpoly(p1xt, [1,1,1,1]...)
-p1yx = diffpoly2(p1, variable_1 = 2, variable_2 = 1); evalpoly(p1yx, [1,1,1,1]...)
-p1yy = diffpoly2(p1, variable_1 = 2, variable_2 = 2); evalpoly(p1yy, [1,1,1,1]...)
-p1yz = diffpoly2(p1, variable_1 = 2, variable_2 = 3); evalpoly(p1yz, [1,1,1,1]...)
-p1yt = diffpoly2(p1, variable_1 = 2, variable_2 = 4); evalpoly(p1yt, [1,1,1,1]...)
-p1zx = diffpoly2(p1, variable_1 = 3, variable_2 = 1); evalpoly(p1zx, [1,1,1,1]...)
-p1zy = diffpoly2(p1, variable_1 = 3, variable_2 = 2); evalpoly(p1zy, [1,1,1,1]...)
-p1zz = diffpoly2(p1, variable_1 = 3, variable_2 = 3); evalpoly(p1zz, [1,1,1,1]...)
-p1zt = diffpoly2(p1, variable_1 = 3, variable_2 = 4); evalpoly(p1zt, [1,1,1,1]...)
-p1tx = diffpoly2(p1, variable_1 = 4, variable_2 = 1); evalpoly(p1tx, [1,1,1,1]...)
-p1ty = diffpoly2(p1, variable_1 = 4, variable_2 = 2); evalpoly(p1ty, [1,1,1,1]...)
-p1tz = diffpoly2(p1, variable_1 = 4, variable_2 = 3); evalpoly(p1tz, [1,1,1,1]...)
-p1tt = diffpoly2(p1, variable_1 = 4, variable_2 = 4); evalpoly(p1tt, [1,1,1,1]...)
-
-
-data_diffx = datan_diffx()
-data_diff2x = datan_diff2x()
-
-
-approxog = [ evalpoly(p1,x...) for x in zip(data[:,1],data[:,2],data[:,3],data[:,4]) ]
-sum( abs.(approxog - data[:,5]) ) / length(data[:,5])
-
-
-approxog = [ evalpoly(p,x...) for x in zip(data_diffx[:,1],data_diffx[:,2],data_diffx[:,3],data_diffx[:,4]) ]
-sum( abs.(approxog - data_diffx[:,5]) ) / length(data_diffx[:,5])
-
-approxog = [ evalpoly(pp,x...) for x in zip(data_diff2x[:,1],data_diff2x[:,2],data_diff2x[:,3],data_diff2x[:,4]) ]
-sum( abs.(approxog - data_diff2x[:,5]) ) / length(data_diff2x[:,5])
-
-@benchmark interpolaten(data)
-@code_warntype interpolaten(data)
-
-evalpoly(p1, 4,4,1,0)
-# 3.36
-
-
-p1
+include("differential operators.jl")
+
+#= ==========================================================================================
+=============================================================================================
+interpolation
+=============================================================================================
+========================================================================================== =#
+
+#                                   R - one variable
+# data is loaded and interpolated
+poly = data2() |> dataloader |> interpolate
+# the interpolation polynomial is compared to the data using their maximum absolute difference
+[evalpoly(poly, row[1:end-1]...) - row[end] for row ∈ eachrow(data2())] .|> abs |> maximum
+
+# graphical comparison
+x = range(0, stop = 2π, length = 100)
+plot(x, x -> evalpoly(poly, x))
+plot!(x, x -> sin(x)) # original function
+
+#                                   R² - two variables
+# data is loaded and interpolated
+poly = data3() |> dataloader |> interpolate
+# the interpolation polynomial is compared to the data using their maximum absolute difference
+[evalpoly(poly, row[1:end-1]...) - row[end] for row ∈ eachrow(data3())] .|> abs |> maximum
+
+# graphical comparison
+x = y = range(0, stop = 2π, length = 100)
+heatmap(x, y, (x, y) -> evalpoly(poly, [x, y]...))
+heatmap(x, y, (x, y) -> round(sin(x) + cos(y), digits = 2)) # original function
+
+#                                   Rⁿ - n variables
+# data is loaded and interpolated
+poly = datan() |> dataloader |> interpolate
+# the interpolation polynomial is compared to the data using their maximum absolute difference
+[evalpoly(poly, row[1:end-1]...) - row[end] for row ∈ eachrow(datan())] .|> abs |> maximum
+
+#= ==========================================================================================
+=============================================================================================
+algebra - addition and subtraction
+=============================================================================================
+========================================================================================== =#
+
+#                                   R - one variable
+f = OneVarPolynomial([0,1,2], [1,3,2] ) # f(x) = 1 + 3x + 2x²
+g = OneVarPolynomial([0,1,4], [1,5,7] ) # g(x) = 1 + 5x + 7x⁴
+f+g # (f+g)(x) = 2 + 8x + 2x² + 7x⁴
+f-g # (f-g)(x) = -2x + 2x² - 7x⁴
+f-f # 0
+
+#                                   R² - two variables
+f = TwoVarPolynomial{Int64}([(0,0), (0,1), (1,0), (1,1)], [1,2,3,4] ) # f(x) = 1 + 2y + 3x + 4xy
+g = TwoVarPolynomial{Int64}([(0,0), (0,1), (1,0), (2,1)], [1,3,5,16] ) # g(x) = 1 + 3y + 5x + 16x²y
+f+g # (f+g)(x) = 2 + 5y + 8x + 4xy + 16x²y
+f-g # (f-g)(x) = -y - 2x + 4xy - 16x²y
+f-f # 0
+
+#                                   Rⁿ - n variables
+f = NVarPolynomial{Int64,2}([(0,0), (0,1), (1,0), (1,1)], [1,2,3,4] ) # f(x) = 1 + 2y + 3x + 4xy
+g = NVarPolynomial{Int64,2}([(0,0), (0,1), (1,0), (2,1)], [1,3,5,16] ) # g(x) = 1 + 3y + 5x + 16x²y
+f+g # (f+g)(x) = 2 + 5y + 8x + 4xy + 16x²y
+f-g # (f-g)(x) = -y - 2x + 4xy - 16x²y
+f-f # 0
+
+#= ==========================================================================================
+=============================================================================================
+differential operators
+=============================================================================================
+========================================================================================== =#
+
+#                                   R - one variable
+f = OneVarPolynomial([0,1,2], [1,3,2] ) # f(x) = 1 + 3x + 2x²
+grad_f = grad(f) # f'(x) = 3 + 4x 
+evalgrad(grad_f, [1]) # f'(1) = 7
+hess_f = hess(f) # f''(x) = 4 
+evalhess(hess_f, [1]) # f''(1) = 4
+lap_f = laplacian(f) # f''(x) = 4 
+evalpoly(lap_f, 1) # f''(1) = 4
+
+#                                   R² - two variables
+f = TwoVarPolynomial{Float64}([(0,0), (0,1), (1,0), (1,1), (3,0)], [1,2,3,4,2] ) # 1 + 2y + 3x + 4xy + + 2x³
+grad_f = grad(f) # ∇f = [3 + 4y + 6x², 2 + 4x]
+evalgrad(grad_f, [1,1]) # ∇f(1,1) = [13, 6]
+hess_f = hess(f) # hess(f) = [12x, 4; 4, 0]
+evalhess(hess_f, [1,1]) # hess(f)(1,1) = [12, 4; 4, 0]
+lap_f = laplacian(f) # ∂²/∂x² f + ∂²/∂y² f = 12x
+evalpoly(lap_f, [1,1]...) # (∂²/∂x² f + ∂²/∂y² f)(1,1) = 12
+
+#                                   Rⁿ - n variables - 1
+f = NVarPolynomial{Float64,2}([(0,0), (0,1), (1,0), (1,1), (3,0)], [1,2,3,4,2] ) # 1 + 2y + 3x + 4xy + + 2x³
+grad_f = grad(f) # ∇f = [3 + 4y + 6x², 2 + 4x]
+evalgrad(grad_f, [1,1]) # ∇f(1,1) = [13, 6]
+hess_f = hess(f) # hess(f) = [12x, 4; 4, 0]
+evalhess(hess_f, [1,1]) # hess(f)(1,1) = [12, 4; 4, 0]
+lap_f = laplacian(f) # ∂²/∂x² f + ∂²/∂y² f = 12x
+evalpoly(lap_f, [1,1]...) # (∂²/∂x² f + ∂²/∂y² f)(1,1) = 12
+
+#                                   Rⁿ - n variables - 2
+f = datan() |> dataloader |> interpolate
+
+grad_f = grad(f) 
+evalgrad(grad_f, [1,1,1,1]) 
+f_x = diffpoly(f, variable = 1); evalpoly(f_x, [1,1,1,1]...)
+f_y = diffpoly(f, variable = 2); evalpoly(f_y, [1,1,1,1]...)
+f_z = diffpoly(f, variable = 3); evalpoly(f_z, [1,1,1,1]...)
+f_t = diffpoly(f, variable = 4); evalpoly(f_t, [1,1,1,1]...)
+
+hess_f = hess(f)
+evalhess(hess_f, [1,1,1,1])
+f_xx = diffpoly2(f, variable_1 = 1, variable_2 = 1); evalpoly(f_xx, [1,1,1,1]...)
+f_xy = diffpoly2(f, variable_1 = 1, variable_2 = 2); evalpoly(f_xy, [1,1,1,1]...)
+f_xz = diffpoly2(f, variable_1 = 1, variable_2 = 3); evalpoly(f_xz, [1,1,1,1]...)
+f_xt = diffpoly2(f, variable_1 = 1, variable_2 = 4); evalpoly(f_xt, [1,1,1,1]...)
+f_yx = diffpoly2(f, variable_1 = 2, variable_2 = 1); evalpoly(f_yx, [1,1,1,1]...)
+f_yy = diffpoly2(f, variable_1 = 2, variable_2 = 2); evalpoly(f_yy, [1,1,1,1]...)
+f_yz = diffpoly2(f, variable_1 = 2, variable_2 = 3); evalpoly(f_yz, [1,1,1,1]...)
+f_yt = diffpoly2(f, variable_1 = 2, variable_2 = 4); evalpoly(f_yt, [1,1,1,1]...)
+f_zx = diffpoly2(f, variable_1 = 3, variable_2 = 1); evalpoly(f_zx, [1,1,1,1]...)
+f_zy = diffpoly2(f, variable_1 = 3, variable_2 = 2); evalpoly(f_zy, [1,1,1,1]...)
+f_zz = diffpoly2(f, variable_1 = 3, variable_2 = 3); evalpoly(f_zz, [1,1,1,1]...)
+f_zt = diffpoly2(f, variable_1 = 3, variable_2 = 4); evalpoly(f_zt, [1,1,1,1]...)
+f_tx = diffpoly2(f, variable_1 = 4, variable_2 = 1); evalpoly(f_tx, [1,1,1,1]...)
+f_ty = diffpoly2(f, variable_1 = 4, variable_2 = 2); evalpoly(f_ty, [1,1,1,1]...)
+f_tz = diffpoly2(f, variable_1 = 4, variable_2 = 3); evalpoly(f_tz, [1,1,1,1]...)
+f_tt = diffpoly2(f, variable_1 = 4, variable_2 = 4); evalpoly(f_tt, [1,1,1,1]...)

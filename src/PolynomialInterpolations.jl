@@ -1,16 +1,16 @@
 module PolynomialInterpolations
 
-    import Base: Tuple
-    import Base: Iterators.take, Iterators.rest
-    import LinearAlgebra: eltype
-    import Kronecker
-    import LinearAlgebra
-    
+    using Base: Tuple
+    import Base: Iterators.take, Iterators.rest, Base.+, Base.-
+    using LinearAlgebra: eltype
+    using Kronecker, LinearAlgebra, FiscomTools;
+
     include("structs.jl")
     include("dataloaders.jl")
-    include("interpolate1.jl")
-    include("interpolate2.jl")
-    include("interpolaten.jl")
+    include("interpolate.jl")
+    include("algebra.jl")
+    include("differential operators.jl")
+
 
     # Variable types
     export OneVarPolydata, TwoVarPolydata, NVarPolydata
