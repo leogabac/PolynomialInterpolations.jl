@@ -15,12 +15,15 @@ module PolynomialInterpolations
     # Variable types
     export OneVarPolydata, TwoVarPolydata, NVarPolydata
     export OneVarPolynomial, TwoVarPolynomial, NVarPolynomial
+    export OneVarPoly_n_Diff, TwoVarPoly_n_Diff, NVarPoly_n_Diff
     # Interpolation
-    export interpolate1, interpolate2, interpolaten
-    # Differentiation, integration
-    export diffpoly, intpoly
-    # Data Loaders, DO NOT WORK
+    export interpolate
+    # Differentiatial analysis
+    export diffpoly, gradient, hessian, laplacian, diff_analyze
+    # Evaluation functions
+    export evalgrad, evalhess #Base.evalpoly, Base.+, Base.- se exportan solas?
+    # Data Loaders
     export dataloader
     export independent, dependent
 
-end # module PolynomialInterpolations
+end

@@ -99,18 +99,18 @@ grad(p)ᵢ = ∂ᵢp,  where p is a scalar field
 =============================================================================================
 ========================================================================================== =#
 
-function grad(p::OneVarPolynomial)
+function gradient(p::OneVarPolynomial)
     # the first derivative is computed
     return [diffpoly(p)]::Vector
 end
 
-function grad(p::TwoVarPolynomial)
+function gradient(p::TwoVarPolynomial)
     # the first derivatives are computed and saved in a vector
     return [diffpoly(p, variable = 1), 
             diffpoly(p, variable = 2)]::Vector
 end
 
-function grad(p::NVarPolynomial)
+function gradient(p::NVarPolynomial)
     # the number of variables is found
     nvars = length(p.pows[1]);
     # the first derivatives are computed and saved in a vector
@@ -126,7 +126,7 @@ hess(p)ᵢⱼ = ∂ᵢ∂ⱼp,  where p is a scalar field
 ========================================================================================== =#
 
 
-function hess(p::OneVarPolynomial)
+function hessian(p::OneVarPolynomial)
     # the second derivative is computed and saved in a matrix (for consistency)
     hessian = Array{OneVarPolynomial}(undef,1,1); hessian[1] = p |> diffpoly2
     return hessian::Matrix
@@ -134,7 +134,7 @@ end
 
 # since second derivatives commute, the hessian matrix will be symmetric. This is used to save time.
 
-function hess(p::TwoVarPolynomial)
+function hessian(p::TwoVarPolynomial)
     # second derivatives are computed (without redundancy)
     hess_p = [diffpoly2(p, variable_1 = 1, variable_2 = 1) diffpoly2(p, variable_1 = 1, variable_2 = 2);
                     nothing                                diffpoly2(p, variable_1 = 2, variable_2 = 2)]
@@ -143,7 +143,7 @@ function hess(p::TwoVarPolynomial)
     return [(!isnothing(hess_p[i,j])) ? hess_p[i,j] : hess_p[j,i] for i in 1:2, j in 1:2]::Matrix
 end
 
-function hess(p::NVarPolynomial)
+function hessian(p::NVarPolynomial)
     # the number of variables is found
     nvars = length(p.pows[1]);
 
@@ -177,4 +177,22 @@ function laplacian(p::NVarPolynomial)
     nvars = length(p.pows[1]);
     # the second derivatives are computed and added
     return (sum(diffpoly2(p, variable_1 = i, variable_2 = i) for i in 1:nvars))::NVarPolynomial
+end
+
+#= ==========================================================================================
+=============================================================================================
+full differential analysis
+=============================================================================================
+========================================================================================== =#
+
+function diff_analyze(p::OneVarPolynomial)
+    return OneVarPoly_n_Diff{eltype(p.coefficients)}(p, gradient(p), hessian(p), laplacian(p))
+end
+
+function diff_analyze(p::TwoVarPolynomial)
+    return TwoVarPoly_n_Diff{eltype(p.coefficients)}(p, gradient(p), hessian(p), laplacian(p))
+end
+
+function diff_analyze(p::NVarPolynomial)
+    return NVarPoly_n_Diff{eltype(p.coefficients), length(p.pows[1])}(p, gradient(p), hessian(p), laplacian(p))
 end

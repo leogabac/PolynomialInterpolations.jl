@@ -98,7 +98,7 @@ addition and subtraction of polynomials
 
 function +(p1::OneVarPolynomial, p2::OneVarPolynomial)
     new_pows = unique(vcat(p1.pows,p2.pows))
-    new_coef = Vector{eltype(p1.coefficients + p2.coefficients)}(undef,length(new_pows))
+    new_coef = Vector{typeof(p1.coefficients[1] + p2.coefficients[1])}(undef,length(new_pows))
 
     p1_index_new_pows = [findfirst(x -> x == pow, p1.pows) for pow in new_pows]
     p2_index_new_pows = [findfirst(x -> x == pow, p2.pows) for pow in new_pows]
@@ -122,7 +122,7 @@ end
 
 function +(p1::TwoVarPolynomial, p2::TwoVarPolynomial)
     new_pows = unique(vcat(p1.pows,p2.pows))
-    new_coef = Vector{eltype(p1.coefficients + p2.coefficients)}(undef,length(new_pows))
+    new_coef = Vector{typeof(p1.coefficients[1] + p2.coefficients[1])}(undef,length(new_pows))
 
     p1_index_new_pows = [findfirst(x -> x == pow, p1.pows) for pow in new_pows]
     p2_index_new_pows = [findfirst(x -> x == pow, p2.pows) for pow in new_pows]
@@ -148,7 +148,7 @@ function +(p1::NVarPolynomial, p2::NVarPolynomial)
     (length(p1.pows[1]) !== length(p2.pows[1])) ? (error("Polynomials do not have the same number of variables!")) : nothing
 
     new_pows = unique(vcat(p1.pows,p2.pows))
-    new_coef = Vector{eltype(p1.coefficients + p2.coefficients)}(undef,length(new_pows))
+    new_coef = Vector{typeof(p1.coefficients[1] + p2.coefficients[1])}(undef,length(new_pows))
 
     p1_index_new_pows = [findfirst(x -> x == pow, p1.pows) for pow in new_pows]
     p2_index_new_pows = [findfirst(x -> x == pow, p2.pows) for pow in new_pows]

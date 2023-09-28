@@ -199,4 +199,18 @@ p = hessian[2]
 
 [0] .|> eltype(p.coefficients)
 
-error("test")
+struct TwoVarPolynomial{T}
+    pows::Vector{Tuple{Int64,Int64}}
+    coefficients::Vector{T}
+end
+
+f = NVarPolynomial{Float64,2}([(0,0), (0,1), (1,0), (1,1), (3,0)], [1,2,3,4,2] ) # 1 + 2y + 3x + 4xy + + 2x³
+f |> typeof
+grad_f = grad(f)|> typeof # ∇f = [3 + 4y + 6x², 2 + 4x]
+hess_f = hess(f) |> typeof# hess(f) = [12x, 4; 4, 0]
+lap_f = laplacian(f)|> typeof # ∂²/∂x² f + ∂²/∂y² f = 12x
+
+
+
+
+OneVarPoly_n_Diff{Int64}(f, grad_f, hess_f, lap_f)
