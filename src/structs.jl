@@ -40,21 +40,21 @@ end
 
 # Polynomial "object" structs with results from differential analysis
 
-struct OneVarPoly_n_Diff{T}
+struct OneVarPolyNDiff{T}
     poly::OneVarPolynomial{T}
     grad::Vector{OneVarPolynomial{T}}
     hess::Matrix{OneVarPolynomial{T}}
     lap::OneVarPolynomial{T}
 end
 
-struct TwoVarPoly_n_Diff{T}
+struct TwoVarPolyNDiff{T}
     poly::TwoVarPolynomial{T}
     grad::Vector{TwoVarPolynomial{T}}
     hess::Matrix{TwoVarPolynomial{T}}
     lap::TwoVarPolynomial{T}
 end
 
-struct NVarPoly_n_Diff{T,N}
+struct NVarPolyNDiff{T,N}
     poly::NVarPolynomial{T,N}
     grad::Vector{NVarPolynomial{T,N}}
     hess::Matrix{NVarPolynomial{T,N}}

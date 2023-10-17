@@ -186,13 +186,13 @@ full differential analysis
 ========================================================================================== =#
 
 function diff_analyze(p::OneVarPolynomial)
-    return OneVarPoly_n_Diff{eltype(p.coefficients)}(p, gradient(p), hessian(p), laplacian(p))
+    return OneVarPolyNDiff{eltype(p.coefficients)}(p, gradient(p), hessian(p), laplacian(p))
 end
 
 function diff_analyze(p::TwoVarPolynomial)
-    return TwoVarPoly_n_Diff{eltype(p.coefficients)}(p, gradient(p), hessian(p), laplacian(p))
+    return TwoVarPolyNDiff{eltype(p.coefficients)}(p, gradient(p), hessian(p), laplacian(p))
 end
 
 function diff_analyze(p::NVarPolynomial)
-    return NVarPoly_n_Diff{eltype(p.coefficients), length(p.pows[1])}(p, gradient(p), hessian(p), laplacian(p))
+    return NVarPolyNDiff{eltype(p.coefficients), length(p.pows[1])}(p, gradient(p), hessian(p), laplacian(p))
 end

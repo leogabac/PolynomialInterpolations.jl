@@ -73,7 +73,7 @@ include("dataloaders.jl")
 include("interpolate.jl")
 include("algebra.jl")
 include("datatests.jl")
-include("differential operators.jl")
+include("differential_operators.jl")
 
 #= ==========================================================================================
 =============================================================================================
@@ -88,9 +88,9 @@ poly = data2() |> dataloader |> interpolate
 [evalpoly(poly, row[1:end-1]...) - row[end] for row ∈ eachrow(data2())] .|> abs |> maximum
 
 # graphical comparison
-x = range(0, stop = 2π, length = 100)
-plot(x, x -> evalpoly(poly, x))
-plot!(x, x -> sin(x)) # original function
+# x = range(0, stop = 2π, length = 100)
+# plot(x, x -> evalpoly(poly, x))
+# plot!(x, x -> sin(x)) # original function
 
 #                                   R² - two variables
 # data is loaded and interpolated
@@ -99,9 +99,9 @@ poly = data3() |> dataloader |> interpolate
 [evalpoly(poly, row[1:end-1]...) - row[end] for row ∈ eachrow(data3())] .|> abs |> maximum
 
 # graphical comparison
-x = y = range(0, stop = 2π, length = 100)
-heatmap(x, y, (x, y) -> evalpoly(poly, [x, y]...))
-heatmap(x, y, (x, y) -> round(sin(x) + cos(y), digits = 2)) # original function
+# x = y = range(0, stop = 2π, length = 100)
+# heatmap(x, y, (x, y) -> evalpoly(poly, [x, y]...))
+# heatmap(x, y, (x, y) -> round(sin(x) + cos(y), digits = 2)) # original function
 
 #                                   Rⁿ - n variables
 # data is loaded and interpolated
@@ -120,21 +120,21 @@ f = OneVarPolynomial([0,1,2], [1,3,2] ) # f(x) = 1 + 3x + 2x²
 g = OneVarPolynomial([0,1,4], [1,5,7] ) # g(x) = 1 + 5x + 7x⁴
 f+g # (f+g)(x) = 2 + 8x + 2x² + 7x⁴
 f-g # (f-g)(x) = -2x + 2x² - 7x⁴
-f-f # 0
+f-f # (f-f)(x) = 0
 
 #                                   R² - two variables
 f = TwoVarPolynomial{Int64}([(0,0), (0,1), (1,0), (1,1)], [1,2,3,4] ) # f(x) = 1 + 2y + 3x + 4xy
 g = TwoVarPolynomial{Int64}([(0,0), (0,1), (1,0), (2,1)], [1,3,5,16] ) # g(x) = 1 + 3y + 5x + 16x²y
 f+g # (f+g)(x) = 2 + 5y + 8x + 4xy + 16x²y
 f-g # (f-g)(x) = -y - 2x + 4xy - 16x²y
-f-f # 0
+f-f # (f-f)(x) = 0
 
 #                                   Rⁿ - n variables
 f = NVarPolynomial{Int64,2}([(0,0), (0,1), (1,0), (1,1)], [1,2,3,4] ) # f(x) = 1 + 2y + 3x + 4xy
 g = NVarPolynomial{Int64,2}([(0,0), (0,1), (1,0), (2,1)], [1,3,5,16] ) # g(x) = 1 + 3y + 5x + 16x²y
 f+g # (f+g)(x) = 2 + 5y + 8x + 4xy + 16x²y
 f-g # (f-g)(x) = -y - 2x + 4xy - 16x²y
-f-f # 0
+f-f # (f-f)(x) = 0
 
 #= ==========================================================================================
 =============================================================================================
@@ -187,10 +187,11 @@ f.poly
 f.grad
 # the gradient is evaluated and compared with the "step by step" result
 evalgrad(f.grad, [1,1,1,1]) 
-f_x = diffpoly(f.poly, variable = 1); evalpoly(f_x, [1,1,1,1]...)
-f_y = diffpoly(f.poly, variable = 2); evalpoly(f_y, [1,1,1,1]...)
-f_z = diffpoly(f.poly, variable = 3); evalpoly(f_z, [1,1,1,1]...)
-f_t = diffpoly(f.poly, variable = 4); evalpoly(f_t, [1,1,1,1]...)
+f_x = diffpoly(f.poly, variable = 1) |> f -> evalpoly(f, [1,1,1,1]...)
+f_y = diffpoly(f.poly, variable = 2) |> f -> evalpoly(f, [1,1,1,1]...)
+f_z = diffpoly(f.poly, variable = 3) |> f -> evalpoly(f, [1,1,1,1]...)
+f_t = diffpoly(f.poly, variable = 4) |> f -> evalpoly(f, [1,1,1,1]...)
+evalgrad(f.grad, [1,1,1,1]) - [f_x; f_y; f_z; f_t]
 
 f.hess
 # the hessian is evaluated and compared with the "step by step" result

@@ -9,13 +9,13 @@ module PolynomialInterpolations
     include("dataloaders.jl")
     include("interpolate.jl")
     include("algebra.jl")
-    include("differential operators.jl")
+    include("differential_operators.jl")
 
 
     # Variable types
     export OneVarPolydata, TwoVarPolydata, NVarPolydata
     export OneVarPolynomial, TwoVarPolynomial, NVarPolynomial
-    export OneVarPoly_n_Diff, TwoVarPoly_n_Diff, NVarPoly_n_Diff
+    export OneVarPolyNDiff, TwoVarPolyNDiff, NVarPolyNDiff
     # Interpolation
     export interpolate
     # Differentiatial analysis
