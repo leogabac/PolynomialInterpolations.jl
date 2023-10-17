@@ -59,8 +59,8 @@ preamble & functions
 # activación de environment de David
     # (@v1.8) pkg> generate PolyInterp_environment
     # (@v1.8) pkg> activate PolyInterp_environment
-    using Pkg
-    Pkg.activate("PolyInterp_environment")
+    # using Pkg
+    # Pkg.activate("PolyInterp_environment")
 
 using Base: Tuple
 import Base: Iterators.take, Iterators.rest, Base.+, Base.-
