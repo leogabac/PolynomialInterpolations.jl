@@ -38,6 +38,29 @@ struct NVarPolynomial{T,N}
     coefficients::Vector{T}
 end
 
+# Polynomial "object" structs with results from differential analysis
+
+struct OneVarPolyNDiff{T}
+    poly::OneVarPolynomial{T}
+    grad::Vector{OneVarPolynomial{T}}
+    hess::Matrix{OneVarPolynomial{T}}
+    lap::OneVarPolynomial{T}
+end
+
+struct TwoVarPolyNDiff{T}
+    poly::TwoVarPolynomial{T}
+    grad::Vector{TwoVarPolynomial{T}}
+    hess::Matrix{TwoVarPolynomial{T}}
+    lap::TwoVarPolynomial{T}
+end
+
+struct NVarPolyNDiff{T,N}
+    poly::NVarPolynomial{T,N}
+    grad::Vector{NVarPolynomial{T,N}}
+    hess::Matrix{NVarPolynomial{T,N}}
+    lap::NVarPolynomial{T,N}
+end
+
 # ===================================================================
 #  CONSTRUCTORS
 # ===================================================================

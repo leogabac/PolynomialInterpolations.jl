@@ -1,21 +1,19 @@
 
 function data2()
-    x = 1.:1:10.; 
+    x = collect(Float64, range(0, stop = 2π, length = 10)); 
     y = round.(sin.(x), digits=2); 
     return  [x y]
 end
 
 function data3()
-    x = collect(Float64, -0.5:0.5:1.5);
-    y = collect(Float64, -0.5:0.5:1.5);
+    x = collect(Float64, range(0, stop = 2π, length = 10));
+    y = collect(Float64, range(0, stop = 2π, length = 10));
     m = length(x); n = length(y);
     c = 1;
     data = Array{Float64}(undef, m * n, 3);
-    dx  = 2.5;
-    dy = -0.4;
     for i in 1:m
         for j in 1:n
-            data[c,:] = [ x[i], y[j], sin(x[i]) + 2*cos(y[j]) + sin(5*x[i]*y[j])  ]';
+            data[c,:] = [ x[i], y[j], round(sin(x[i]) + cos(y[j]), digits=2)]';
             c += 1;
         end 
     end
@@ -45,7 +43,3 @@ function datan()
     end
     return data
 end
-
-test1 = data2();
-test2 = data3()
-testn = datan()

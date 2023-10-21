@@ -1,0 +1,7 @@
+name = "PolyInterp_environment"
+uuid = "ea59df5f-c73b-4904-9f78-d3687bd1c13f"
+authors = ["david16correa <david16correa@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Kronecker = "2c470bb0-bcc8-11e8-3dad-c9649493f05e"
